@@ -1,4 +1,4 @@
-%%writefile app.py
+%writefile app.py
 import streamlit as st
 from utils.grok_ai import grok_stock_intelligence
 
