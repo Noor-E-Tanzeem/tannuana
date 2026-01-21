@@ -1,40 +1,44 @@
+import requests
 
-import streamlit as st
-from utils.grok_ai import grok_stock_intelligence
+def grok_stock_intelligence(grok_api_key, stock, headlines_text):
+    url = "https://api.x.ai/v1/chat/completions"
 
-st.set_page_config(page_title="Insider Stock Intel", layout="wide")
+    prompt = f"""
+You are an Insider-style Stock News Intelligence Analyst.
 
-st.title("📈 Insider-Style Stock News Intelligence Platform")
-st.write("Paste headlines → Get insider intelligence using Grok Cloud ✅")
+Stock: {stock}
 
-# Inputs
-grok_api_key = st.text_input("Enter Grok API Key", type="password")
-hf_token = st.text_input("Enter HuggingFace Token (optional, just storing)", type="password")
+News Headlines:
+{headlines_text}
 
-stock = st.text_input("Stock Name / Ticker (Example: TSLA, INFY, AAPL)")
-headlines = st.text_area(
-    "Paste News Headlines (one per line)",
-    height=200,
-    placeholder="Example:\nTesla shares rise after delivery numbers...\nApple faces regulatory pressure...\nInfosys wins major contract..."
-)
+Give output in this format:
 
-if st.button("Generate Insider Intelligence"):
-    if not grok_api_key:
-        st.error("Please enter Grok API key")
-    elif not stock:
-        st.error("Please enter stock name/ticker")
-    elif not headlines.strip():
-        st.error("Please paste some headlines")
-    else:
-        with st.spinner("Analyzing like an insider..."):
-            result = grok_stock_intelligence(
-                grok_api_key=grok_api_key,
-                stock=stock,
-                headlines_text=headlines
-            )
+1) Big Picture Summary (3 lines)
+2) Bull Signals (3 points)
+3) Bear/Risk Signals (3 points)
+4) What Investors Should Watch Next (3 points)
+5) Insider Score (0-100) + one-line reason
 
-        st.subheader("✅ Insider Intelligence Report")
-        st.write(result)
+Keep it short, sharp, and actionable.
+"""
 
-        st.subheader("🔐 Tokens You Entered (Safe Note)")
-        st.info("HuggingFace token is not used for models. It’s just accepted as per your requirement.")
+    headers = {
+        "Authorization": f"Bearer {grok_api_key.strip()}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "grok-4-0709",
+        "messages": [
+            {"role": "system", "content": "You give stock market intelligence clearly."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.4
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code != 200:
+        return f"ERROR: Grok API failed ({response.status_code}) - {response.text}"
+
+    return response.json()["choices"][0]["message"]["content"]
