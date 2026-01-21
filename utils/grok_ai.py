@@ -1,4 +1,3 @@
-%%writefile utils/grok_ai.py
 import requests
 
 def grok_stock_intelligence(grok_api_key, stock, headlines_text):
